@@ -11,11 +11,11 @@ public class HuntStrategy implements MovementStrategy {
     }
 
     @Override
-    public void move(Animal animal, List<Animal> animals, List<Grass> grassList) {
+    public void chooseDirection(Animal animal, List<Animal> animals, List<Grass> grassList) {
         animals.stream()
-            .filter(a -> a != animal && !a.isDead())       
+            .filter(a -> a != animal && !a.isDead())
             .filter(isPrey)
             .min(Comparator.comparingDouble(animal::getDistanceTo))
-            .ifPresent(prey -> animal.moveToward(prey.x, prey.y));
+            .ifPresent(prey -> MovementStrategy.moveToward(animal, prey.x, prey.y));
     }
 }

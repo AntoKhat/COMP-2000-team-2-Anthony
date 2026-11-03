@@ -6,7 +6,7 @@ import java.util.List;
 public class Cow extends Animal implements AnimalBehaviours {
     private static float defaultHealth = 8f;
     private static float defaultSpeed = 2f;
-    private static int defaultMaxHunger = 600;
+    private static int defaultMaxHunger = 800;
     private static int defaultFoodValue = 200;
     private static int defaultDamage = 0;
 

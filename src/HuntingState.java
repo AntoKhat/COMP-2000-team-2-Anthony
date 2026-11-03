@@ -9,8 +9,8 @@ public class HuntingState implements AnimalState {
             return;
         }
 
-        animal.getHuntStrategy().move(animal, animals, grassList);
-        animal.updateCore(screenWidth, screenHeight);
+        animal.getHuntStrategy().move(animal, animals, grassList, screenWidth, screenHeight);
+        animal.updateTimers();
 
         if (animal.isDead()) {
             animal.setState(new DeadState());

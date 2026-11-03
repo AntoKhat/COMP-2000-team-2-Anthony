@@ -4,14 +4,14 @@ import java.util.List;
 public class GrazeStrategy implements MovementStrategy {
 
     @Override
-    public void move(Animal animal, List<Animal> animals, List<Grass> grassList) {
+    public void chooseDirection(Animal animal, List<Animal> animals, List<Grass> grassList) {
         if (grassList == null) return;
 
         grassList.stream()
             .filter(g -> !g.isEaten)
             .min(Comparator.comparingDouble(g -> Math.sqrt((animal.x - g.x) * (animal.x - g.x) + (animal.y - g.y) * (animal.y - g.y))))
             .ifPresent(grass -> {
-                animal.moveToward(grass.x, grass.y);
+                MovementStrategy.moveToward(animal, grass.x, grass.y);
 
                 if (animal.getBounds().intersects(grass.getBounds())) {
                     grass.isEaten = true;

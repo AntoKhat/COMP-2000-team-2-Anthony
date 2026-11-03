@@ -1,11 +1,12 @@
 import java.util.List;
+import java.util.Comparator;
 
 public class ReproductionState implements AnimalState {
 
     private static final int MAX_POPULATION_PER_SPECIES = 12;
     private static final int REPRODUCTION_COOLDOWN = 600;
     private static final int MIN_HUNGER_TO_BREED = 200;
-    private static final int BIRTH_HUNGER_COST = 200;
+    private static final int BIRTH_HUNGER_COST = 100;
 
     @Override
     public void update(Animal animal, int screenWidth, int screenHeight, List<Animal> animals, List<Grass> grassList) {
@@ -26,14 +27,15 @@ public class ReproductionState implements AnimalState {
         Animal partner = findNearestPartner(animal, animals);
 
         if (partner == null) {
-            animal.updateCore(screenWidth, screenHeight);
+            MovementStrategy.applyMovement(animal, screenWidth, screenHeight);
+            animal.updateTimers();
             animal.setState(new WanderingState());
             return;
         }
 
-        animal.moveToward(partner.x, partner.y);
-
-        animal.updateCore(screenWidth, screenHeight);
+        MovementStrategy toPartner = (a, all, grass) -> MovementStrategy.moveToward(a, partner.x, partner.y);
+        toPartner.move(animal, animals, grassList, screenWidth, screenHeight);
+        animal.updateTimers();
 
         if (animal.getBounds().intersects(partner.getBounds())) {
             Animal child = null;
@@ -63,31 +65,20 @@ public class ReproductionState implements AnimalState {
     }
 
     private Animal findNearestPartner(Animal animal, List<Animal> animals) {
-        Animal nearest = null;
-        double minDistance = Double.MAX_VALUE;
-
-        for (Animal a : animals) {
-            if (a != animal
-                    && a.getClass().equals(animal.getClass())
-                    && !a.isDead()
-                    && !a.isHungry
-                    && a.hunger > MIN_HUNGER_TO_BREED
-                    && a.reproductionCooldown <= 0) {   // partner must also be ready
-                double dist = animal.getDistanceTo(a);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    nearest = a;
-                }
-            }
-        }
-        return nearest;
+        return animals.stream()
+            .filter(a -> a != animal)
+            .filter(a -> a.getClass().equals(animal.getClass()))
+            .filter(a -> !a.isDead())
+            .filter(a -> !a.isHungry)
+            .filter(a -> a.hunger > MIN_HUNGER_TO_BREED)
+            .filter(a -> a.reproductionCooldown <= 0)
+            .min(Comparator.comparingDouble(animal::getDistanceTo))
+            .orElse(null);
     }
 
     private int countSpecies(Animal animal, List<Animal> animals) {
-        int count = 0;
-        for (Animal a : animals) {
-            if (a.getClass().equals(animal.getClass()) && !a.isDead()) count++;
-        }
-        return count;
+        return (int) animals.stream()
+            .filter(a -> a.getClass().equals(animal.getClass()) && !a.isDead())
+            .count();
     }
 }

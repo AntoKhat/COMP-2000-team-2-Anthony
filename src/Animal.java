@@ -69,47 +69,8 @@ abstract class Animal { // parent class for all animals
         return Math.sqrt((deltaX * deltaX) + (deltaY * deltaY));
     }
 
-    // dx/dy move toward a target
-    public void moveToward(int targetX, int targetY) {
-        int speed = (int) this.speed;
-        if (targetX > x) {
-            dx = speed;
-        } else if (targetX < x) {
-            dx = -speed;
-        } else {
-            dx = 0;
-        }
-
-        if (targetY > y) {
-            dy = speed;
-        } else if (targetY < y) {
-            dy = -speed;
-        } else {
-            dy = 0;
-        }
-    }
-
     // updateCore to call State
-    public void updateCore(int screenWidth, int screenHeight) {
-        x += dx;
-        y += dy;
-
-        if (x <= 0) {
-            x = 0;
-            dx = -dx;
-        } else if (x >= screenWidth - width) {
-            x = screenWidth - width;
-            dx = -dx;
-        }
-    
-        if (y <= 0) {
-            y = 0;
-            dy = -dy;
-        } else if (y >= screenHeight - height) {
-            y = screenHeight - height;
-            dy = -dy;
-        }
-
+    public void updateTimers() {
         // Hunger logic
         if (hunger > 0) {
             hunger = hunger - 1; // count down hunger
@@ -118,7 +79,7 @@ abstract class Animal { // parent class for all animals
         }
 
         // if animal hungry, start starvation time
-        if (isHungry == true) {
+        if (isHungry) {
             starvationTimer = starvationTimer - 1;
         }
 

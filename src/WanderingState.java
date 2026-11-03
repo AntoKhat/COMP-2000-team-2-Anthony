@@ -4,9 +4,9 @@ public class WanderingState implements AnimalState {
 
     @Override
     public void update(Animal animal, int screenWidth, int screenHeight, List<Animal> animals, List<Grass> grassList) {
-        animal.getWanderStrategy().move(animal, animals, grassList); // strategy picks direction
-        animal.updateCore(screenWidth, screenHeight); // actually move + timers
-
+        animal.getWanderStrategy().move(animal, animals, grassList, screenWidth, screenHeight); // strategy picks direction + moves
+        animal.updateTimers(); // hunger, starvation, cooldowns
+        
         if (animal.isHungry) {
             animal.setState(new HuntingState());
             return;

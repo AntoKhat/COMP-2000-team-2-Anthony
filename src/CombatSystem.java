@@ -19,7 +19,8 @@ public class CombatSystem {
     }
 
     private static void dinoCavemanCombat(Dinosaur dino, Caveman caveman, List<Animal> animals) {
-        if (dino.isHungry && dino.attackCooldown == 0 && caveman.attackCooldown == 0) {
+        if (dino.isHungry
+             && dino.attackCooldown == 0 && caveman.attackCooldown == 0) {
             List<Caveman> fighters = new ArrayList<>();
             fighters.add(caveman);
 
@@ -43,7 +44,7 @@ public class CombatSystem {
 
                 for (Caveman ally : nearbyAllies) {
                     dino.takeDamage(ally.damage);
-                    ally.moveToward(dino.x, dino.y);
+                    MovementStrategy.moveToward(ally, dino.x, dino.y);
                 }
             }
 
