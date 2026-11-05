@@ -36,7 +36,10 @@ public class Simulator extends JPanel {
         // cave goes first: zones apply in list order, so the shelter is set before the
         // lava checks it
         environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), cavemen), cavemen));
-        createVolcano(400, 300, 150, 0);
+        Volcano volcano = new Volcano(400, 300, 150, 0);
+        environment.add(ZoneEffects.poison(new AshCloud(volcano), a -> true, 300));
+        environment.add(volcano);
+        environment.add(ZoneEffects.cleanse(new WaterHole(120, 480, 60), a -> true));
 
         timer = new Timer(16, e -> {
             updateSimulation();
@@ -134,8 +137,6 @@ public class Simulator extends JPanel {
             animal.draw(g2);
         }
     }
-
-
 
     public void createVolcano(int spawnX, int spawnY, int radius, int lavaRad) {
         environment.add(new Volcano(spawnX, spawnY, radius, lavaRad));

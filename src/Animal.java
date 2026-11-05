@@ -166,5 +166,7 @@ abstract class Animal { // parent class for all animals
             String starvText = "Dying in: " + secondsLeft + "s (" + starvationTimer + "t)";
             g2.drawString(starvText, x, y - 5);
         }
+
+        // create show status effects
     }
 }
