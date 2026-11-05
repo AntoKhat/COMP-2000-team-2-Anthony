@@ -168,7 +168,31 @@ abstract class Animal { // parent class for all animals
             String starvText = "Dying in: " + secondsLeft + "s (" + starvationTimer + "t)";
             g2.drawString(starvText, x, y - 5);
         }
+        
+        if (invulnerable == true) {
+            g2.setColor(Color.YELLOW);
+            String shieldText = "Shielded";
+            g2.drawString(shieldText, x, y - 30);
+        }
+ 
+        if (poisonTicks > 0) {
+            g2.setColor(new Color(128, 0, 128));
+            String poisonText = "Poisoned" + poisonTicks;
+            g2.drawString(poisonText, x, y - 40);
+        }
 
-        // create show status effects
-    }
+        if (speedMultiplier > 1) {
+            g2.setColor(Color.BLUE);
+            String speedBoostString = "Speed BOOST";
+            g2.drawString(speedBoostString, x, y - 35);
+        }
+
+        if (speedMultiplier < 1) {
+            g2.setColor(Color.GRAY);
+            String slowText = "Slowed";
+            g2.drawString (slowText, x , y - 35);
+        }
+
+
+    } 
 }
