@@ -31,7 +31,7 @@ public class Simulator extends JPanel {
         createCow(300, 300);
         
         createVolcano(400, 300, 150, 0);
-        createCave(300, 400);
+        createCave(800, 700);
 
         timer = new Timer(16, e -> {
             updateSimulation();

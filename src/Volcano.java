@@ -19,6 +19,11 @@ public class Volcano extends Zone {
     }
 
     @Override
+    public Shape getShape() {
+        return new java.awt.geom.Ellipse2D.Double(x - lavaRadius, (y - r) - lavaRadius, lavaRadius * 2, lavaRadius * 2);
+    }
+
+    @Override
     public void update() { // increases the size of the lava while its errupting
         tickCount++;
         if (tickCount >= 1500) { // tick count is set to ~10 seconds change accordingly
