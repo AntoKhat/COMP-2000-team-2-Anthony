@@ -3,6 +3,7 @@ import java.util.List;
 
 abstract class Animal { // parent class for all animals
     float health;
+    float maxHealth;
     float reproductionCooldown = 350;
     int damage;
     public int attackCooldown = 0;
@@ -12,6 +13,8 @@ abstract class Animal { // parent class for all animals
     boolean isHungry = false;
     int starvationTimer = 600;
     int defaultStarvationTime = 600;
+    boolean invulnerable = false;
+    private boolean statsCaptured;
 
     float speed;
     int x; // current x position
@@ -35,16 +38,32 @@ abstract class Animal { // parent class for all animals
         this.currentState = new WanderingState();
     }
 
+
+    public void resetEffects() { // calls once per tick, before zones run
+        if (!statsCaptured) {
+            maxHealth = health;
+            statsCaptured = true; //full health at first tick = cap for healing
+            }
+            invulnerable = false; // zones re-apply it each tick while the animal is inside
+        }
+    }
+
+    public void heal(float amount) {
+        health = Math.min(maxHealth, health +amount);
+    }
+
     public void setState(AnimalState newState) {
         this.currentState = newState;
     }
 
     public void kill() {
+        if (invulnerable) return;
         health = 0;
         this.currentState = new DeadState();
     }
 
     public void takeDamage(float damage) {
+        if (invulnerable) return;
         health -= damage;
         if (health <= 0) {
             this.currentState = new DeadState();
