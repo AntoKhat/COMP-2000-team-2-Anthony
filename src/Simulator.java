@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.function.Predicate;
+
 
 public class Simulator extends JPanel {
     private List<Animal> animals = new ArrayList<>();

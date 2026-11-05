@@ -1,10 +1,12 @@
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Volcano extends Zone {
 
         // set the x value for where i want the zone to begin
     int r;
     int lavaRadius;
+    private static final BufferedImage sprite = SpriteLoader.load("src/assets/volcano.png");
 
 
 
@@ -91,10 +93,14 @@ public class Volcano extends Zone {
     @Override
     public void draw(Graphics2D drawing) { // draws the shape of the volcano and lava
         // volcano base
+        if (sprite !=null) {
+        drawing.drawImage(sprite, x - r, y - r, r * 2, r * 2, null);
+        } else {
         drawing.setColor(new Color(90, 70, 60));
         int[] volcX = { x, x - r, x + r };
         int[] volcY = { y - r, y + r, y + r };
         drawing.fillPolygon(volcX, volcY, 3);
+        }
 
         // lava
         drawing.setColor(new Color(100, 10, 10));
