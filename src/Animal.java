@@ -16,6 +16,7 @@ abstract class Animal { // parent class for all animals
     boolean invulnerable = false;
     private boolean statsCaptured;
     int poisonTicks = 0;
+    float speedMultiplier = 1f;
 
     float speed;
     int x; // current x position
