@@ -2,7 +2,13 @@ import java.awt.*;
 
 public class Volcano extends Zone {
 
+    
+    
     // set the x value for where i want the zone to begin
+    
+    
+    
+    
     int r;
     int lavaRadius;
     boolean errupting = false;

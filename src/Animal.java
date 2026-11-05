@@ -15,6 +15,7 @@ abstract class Animal { // parent class for all animals
     int defaultStarvationTime = 600;
     boolean invulnerable = false;
     private boolean statsCaptured;
+    int poisonTicks = 0;
 
     float speed;
     int x; // current x position
@@ -25,10 +26,21 @@ abstract class Animal { // parent class for all animals
     int width = 40;
     int height = 40;
 
-    public MovementStrategy getWanderStrategy() { return wanderStrategy; }
-    public MovementStrategy getHuntStrategy() { return huntStrategy; }
-    public void setWanderStrategy(MovementStrategy s) { this.wanderStrategy = s; }
-    public void setHuntStrategy(MovementStrategy s) { this.huntStrategy = s; }
+    public MovementStrategy getWanderStrategy() {
+        return wanderStrategy;
+    }
+
+    public MovementStrategy getHuntStrategy() {
+        return huntStrategy;
+    }
+
+    public void setWanderStrategy(MovementStrategy s) {
+        this.wanderStrategy = s;
+    }
+
+    public void setHuntStrategy(MovementStrategy s) {
+        this.huntStrategy = s;
+    }
 
     protected AnimalState currentState;
     protected MovementStrategy wanderStrategy = new RandomWanderStrategy();
@@ -38,18 +50,21 @@ abstract class Animal { // parent class for all animals
         this.currentState = new WanderingState();
     }
 
-
     public void resetEffects() { // calls once per tick, before zones run
         if (!statsCaptured) {
             maxHealth = health;
-            statsCaptured = true; //full health at first tick = cap for healing
-            }
-            invulnerable = false; // zones re-apply it each tick while the animal is inside
+            statsCaptured = true; // full health at first tick = cap for healing
+        }
+        invulnerable = false; // zones re-apply it each tick while the animal is inside
+
+        if (poisonTicks > 0) {
+            takeDamage(0.02f);
+            poisonTicks--;
         }
     }
 
     public void heal(float amount) {
-        health = Math.min(maxHealth, health +amount);
+        health = Math.min(maxHealth, health + amount);
     }
 
     public void setState(AnimalState newState) {
@@ -57,13 +72,15 @@ abstract class Animal { // parent class for all animals
     }
 
     public void kill() {
-        if (invulnerable) return;
+        if (invulnerable)
+            return;
         health = 0;
         this.currentState = new DeadState();
     }
 
     public void takeDamage(float damage) {
-        if (invulnerable) return;
+        if (invulnerable)
+            return;
         health -= damage;
         if (health <= 0) {
             this.currentState = new DeadState();
@@ -76,6 +93,14 @@ abstract class Animal { // parent class for all animals
         } else {
             return false;
         }
+    }
+
+    public void setPoison(int ticks) {
+        poisonTicks = Math.max(poisonTicks, ticks); // re-entering ash refreshes the timer, it doesn't stack
+    }
+
+    public void cleanse() {
+        poisonTicks = 0;
     }
 
     public Rectangle getBounds() { // a collider
