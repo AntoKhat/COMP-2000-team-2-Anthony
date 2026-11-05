@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.function.Predicate;
 
 public class Simulator extends JPanel {
     private List<Animal> animals = new ArrayList<>();
@@ -29,9 +30,13 @@ public class Simulator extends JPanel {
         createCow(400, 400);
         createCow(450, 400);
         createCow(300, 300);
-        
+
+        Predicate<Animal> cavemen = a -> a instanceof Caveman;
+
+        // cave goes first: zones apply in list order, so the shelter is set before the
+        // lava checks it
+        environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), cavemen), cavemen));
         createVolcano(400, 300, 150, 0);
-        createCave(800, 700);
 
         timer = new Timer(16, e -> {
             updateSimulation();
@@ -44,36 +49,31 @@ public class Simulator extends JPanel {
         int screenWidth = getWidth();
         int screenHeight = getHeight();
 
+        animals.forEach(Animal::resetEffects);
+
         for (Zone zone : environment) {
             zone.update();
+            for (Animal a : animals) {
+                if (zone.contains(a.x, a.y)) {
+                    zone.applyEffect(a);
+                }
+            }
+            for (Grass g : grassList) {
+                if (zone.contains(g.x, g.y)) {
+                    zone.onGrass(g);
+                }
+            }
         }
 
-        Volcano volcano = getVolcano();
-        boolean volcanoErupting = (volcano != null && volcano.errupting);
-
-        // Spawning grass (stops when volcano is erupting)
-        if (!volcanoErupting) {
+        // Spawning grass gets supressed when volcano errupts
+        boolean suppressGrass = environment.stream().anyMatch(Zone::suppressesGrass);
+        if (!suppressGrass) {
             grassSpawnTimer++;
             if (grassSpawnTimer >= 30) {
                 int randomX = 30 + rand.nextInt(Math.max(100, screenWidth - 60));
                 int randomY = 30 + rand.nextInt(Math.max(100, screenHeight - 60));
                 grassList.add(new Grass(randomX, randomY));
                 grassSpawnTimer = 0;
-            }
-        }
-
-        // Lava kills animal and grass inside
-        if (volcanoErupting) {
-            for (Animal a : animals) {
-                if (volcano.contains(a.x, a.y)) {
-                    a.kill();
-                }
-            }
-
-            for (Grass g : grassList) {
-                if (volcano.contains(g.x, g.y)) {
-                    g.isEaten = true;
-                }
             }
         }
 
@@ -84,25 +84,27 @@ public class Simulator extends JPanel {
         }
 
         // Check animal collision (Combat System)
-        /*for (int i = 0; i < animals.size(); i++) {
-            for (int j = i + 1; j < animals.size(); j++) {
-                Animal a = animals.get(i);
-                Animal b = animals.get(j);
-
-                if (a.getBounds().intersects(b.getBounds())) {
-                    CombatSystem.handleCollision(a, b, animals);
-                }
-            }
-        }*/
+        /*
+         * for (int i = 0; i < animals.size(); i++) {
+         * for (int j = i + 1; j < animals.size(); j++) {
+         * Animal a = animals.get(i);
+         * Animal b = animals.get(j);
+         * 
+         * if (a.getBounds().intersects(b.getBounds())) {
+         * CombatSystem.handleCollision(a, b, animals);
+         * }
+         * }
+         * }
+         */
 
         // (read only) find every pair of animals collided
-        List<Animal[]> collisions = IntStream.range(0, animals.size()) 
-            .parallel()
-            .boxed()
-            .flatMap(i -> IntStream.range(i + 1, animals.size())
-                .filter(j -> animals.get(i).getBounds().intersects(animals.get(j).getBounds()))
-                .mapToObj(j -> new Animal[] { animals.get(i), animals.get(j) }))
-            .collect(Collectors.toList());
+        List<Animal[]> collisions = IntStream.range(0, animals.size())
+                .parallel()
+                .boxed()
+                .flatMap(i -> IntStream.range(i + 1, animals.size())
+                        .filter(j -> animals.get(i).getBounds().intersects(animals.get(j).getBounds()))
+                        .mapToObj(j -> new Animal[] { animals.get(i), animals.get(j) }))
+                .collect(Collectors.toList());
 
         // resolve the fights one thread at a time -> fix race conditions
         for (Animal[] pair : collisions) {
@@ -133,14 +135,7 @@ public class Simulator extends JPanel {
         }
     }
 
-    private Volcano getVolcano() {
-        for (Zone zone : environment) {
-            if (zone instanceof Volcano) {
-                return (Volcano) zone;
-            }
-        }
-        return null;
-    }
+
 
     public void createVolcano(int spawnX, int spawnY, int radius, int lavaRad) {
         environment.add(new Volcano(spawnX, spawnY, radius, lavaRad));
