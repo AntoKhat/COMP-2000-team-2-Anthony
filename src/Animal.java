@@ -57,6 +57,7 @@ abstract class Animal { // parent class for all animals
             statsCaptured = true; // full health at first tick = cap for healing
         }
         invulnerable = false; // zones re-apply it each tick while the animal is inside
+        speedMultiplier = 1f;
 
         if (poisonTicks > 0) {
             takeDamage(0.02f);
