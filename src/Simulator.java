@@ -31,16 +31,15 @@ public class Simulator extends JPanel {
         createCow(450, 400);
         createCow(300, 300);
 
-
-
         // Creates environment with their related status effect
-        Predicate<Animal> cavemen = a -> a instanceof Caveman;
 
-        environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), cavemen), cavemen));
+
+        environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), a -> a instanceof Caveman), a -> a instanceof Caveman));
+        environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(2000, 500), a -> a instanceof Caveman), a -> a instanceof Caveman));
         Volcano volcano = new Volcano(400, 300, 150, 0);
         environment.add(ZoneEffects.poison(new AshCloud(volcano), a -> true, 300));
         environment.add(volcano);
-        environment.add(ZoneEffects.cleanse(new WaterHole(120, 480, 60), a -> true));
+        environment.add(ZoneEffects.cleanse(new WaterHole(120, 1000, 90), a -> true));
         environment.add(ZoneEffects.slow(new Swamp(1300, 20, 400, 380), a -> true));
         environment.add(ZoneEffects.speedBoost(new Plain(1000, 800, 800, 900), a -> a instanceof Dinosaur, 1.5f));
 

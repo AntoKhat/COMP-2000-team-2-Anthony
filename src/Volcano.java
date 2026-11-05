@@ -16,7 +16,7 @@ public class Volcano extends Zone {
     boolean errupting = false;
     int tickCount = 0;
 
-    static final int DORMANT_TICKS = 1500;
+    static final int DORMANT_TICKS = 3600;
     static final int MAX_LAVA = 600;
     static final int GROW_RATE = 3;
     static final int SHRINK_RATE = 1;
