@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+
 public class Simulator extends JPanel {
     private List<Animal> animals = new ArrayList<>();
     private List<Zone> environment = new ArrayList<>();
@@ -36,8 +37,17 @@ public class Simulator extends JPanel {
         createCow(450, 400);
         createCow(300, 300);
 
-        createVolcano(400, 300, 150, 0);
-        createCave(300, 400);
+        // Creates environment with their related status effect
+
+
+        environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), a -> a instanceof Caveman), a -> a instanceof Caveman));
+        environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(2000, 500), a -> a instanceof Caveman), a -> a instanceof Caveman));
+        Volcano volcano = new Volcano(400, 300, 150, 0);
+        environment.add(ZoneEffects.poison(new AshCloud(volcano), a -> true, 300));
+        environment.add(volcano);
+        environment.add(ZoneEffects.cleanse(new WaterHole(120, 1000, 90), a -> true));
+        environment.add(ZoneEffects.slow(new Swamp(1300, 20, 400, 380), a -> true));
+        environment.add(ZoneEffects.speedBoost(new Plain(1000, 800, 800, 900), a -> a instanceof Dinosaur, 1.5f));
 
         for (int i = 0; i < targetPlantCount; i++) {
             createPlant();
@@ -54,36 +64,31 @@ public class Simulator extends JPanel {
         int screenWidth = getWidth();
         int screenHeight = getHeight();
 
+        animals.forEach(Animal::resetEffects);
+
         for (Zone zone : environment) {
             zone.update();
+            for (Animal a : animals) {
+                if (zone.contains(a.x, a.y)) {
+                    zone.applyEffect(a);
+                }
+            }
+            for (Grass g : grassList) {
+                if (zone.contains(g.x, g.y)) {
+                    zone.onGrass(g);
+                }
+            }
         }
 
-        Volcano volcano = getVolcano();
-        boolean volcanoErupting = (volcano != null && volcano.errupting);
-
-        // Spawning grass (stops when volcano is erupting)
-        if (!volcanoErupting) {
+        // Spawning grass gets supressed when volcano errupts
+        boolean suppressGrass = environment.stream().anyMatch(Zone::suppressesGrass);
+        if (!suppressGrass) {
             grassSpawnTimer++;
             if (grassSpawnTimer >= 30) {
                 int randomX = 30 + rand.nextInt(Math.max(100, screenWidth - 60));
                 int randomY = 30 + rand.nextInt(Math.max(100, screenHeight - 60));
                 grassList.add(new Grass(randomX, randomY));
                 grassSpawnTimer = 0;
-            }
-        }
-
-        // Lava kills animal and grass inside
-        if (volcanoErupting) {
-            for (Animal a : animals) {
-                if (volcano.contains(a.x, a.y)) {
-                    a.kill();
-                }
-            }
-
-            for (Grass g : grassList) {
-                if (volcano.contains(g.x, g.y)) {
-                    g.isEaten = true;
-                }
             }
         }
 
@@ -138,15 +143,6 @@ public class Simulator extends JPanel {
             animal.draw(g2);
         }
         EcosystemDashboard.draw(g2, animals);
-    }
-
-    private Volcano getVolcano() {
-        for (Zone zone : environment) {
-            if (zone instanceof Volcano) {
-                return (Volcano) zone;
-            }
-        }
-        return null;
     }
 
     public void createVolcano(int spawnX, int spawnY, int radius, int lavaRad) {

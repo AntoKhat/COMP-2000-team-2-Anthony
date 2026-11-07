@@ -1,12 +1,27 @@
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Volcano extends Zone {
 
-    // set the x value for where i want the zone to begin
+        // set the x value for where i want the zone to begin
     int r;
     int lavaRadius;
+    private static final BufferedImage sprite = SpriteLoader.load("src/assets/volcano.png");
+
+
+
+    enum Phase {
+        DORMANT, ERUPTING, FADING
+    }
+
+    Phase phase = Phase.DORMANT;
     boolean errupting = false;
     int tickCount = 0;
+
+    static final int DORMANT_TICKS = 3600;
+    static final int MAX_LAVA = 600;
+    static final int GROW_RATE = 3;
+    static final int SHRINK_RATE = 1;
 
     // tick rate for timing on when the volcano errupts
 
@@ -19,34 +34,73 @@ public class Volcano extends Zone {
     }
 
     @Override
-    public void update() { // increases the size of the lava while its errupting
-        tickCount++;
-        if (tickCount >= 1500) { // tick count is set to ~10 seconds change accordingly
-            errupting = true;
-        }
-        if (errupting && lavaRadius < 500) {
-
-            lavaRadius += 10;
-        }
+    public Shape getShape() {
+        return new java.awt.geom.Ellipse2D.Double(x - lavaRadius, (y - r) - lavaRadius, lavaRadius * 2, lavaRadius * 2);
     }
 
     @Override
-    public boolean contains(int checkX, int checkY) { // checks if an animal is within the lava radius
-        if (!errupting) {
-            return false;
+    public void update() {
+        switch (phase) {
+            case DORMANT:
+                tickCount++;
+                if (tickCount >= DORMANT_TICKS) {
+                    phase = Phase.ERUPTING;
+                }
+                break;
+            case ERUPTING:
+                lavaRadius += GROW_RATE;
+                if (lavaRadius >= MAX_LAVA) {
+                    lavaRadius = MAX_LAVA;
+                    phase = Phase.FADING;
+                }
+                break;
+            case FADING:
+                lavaRadius -= SHRINK_RATE;
+                if (lavaRadius <= 0) {
+                    lavaRadius = 0;
+                    tickCount = 0; // timer restarts
+                    phase = Phase.DORMANT;
+                }
+                break;
         }
-        double distance = Math.sqrt(((checkX - x) * (checkX - x)) + ((checkY - (y - r)) * (checkY - (y - r))));
-        return distance <= lavaRadius;
 
+    }
+
+    @Override
+    public boolean contains(int checkX, int checkY) {
+        if (lavaRadius <= 0)
+            return false; // no lava, nothing to be inside
+        double dx = checkX - x;
+        double dy = checkY - (y - r);
+        return Math.sqrt(dx * dx + dy * dy) <= lavaRadius;
+    }
+
+    @Override
+    public void applyEffect(Animal a) {
+        a.kill();
+    }
+
+    @Override
+    public void onGrass(Grass g) {
+        g.isEaten = true;
+    }
+
+    @Override
+    public boolean suppressesGrass() {
+        return phase != Phase.DORMANT; // no grass spawning while erupting or fading
     }
 
     @Override
     public void draw(Graphics2D drawing) { // draws the shape of the volcano and lava
         // volcano base
+        if (sprite !=null) {
+        drawing.drawImage(sprite, x - r, y - r, r * 2, r * 2, null);
+        } else {
         drawing.setColor(new Color(90, 70, 60));
         int[] volcX = { x, x - r, x + r };
         int[] volcY = { y - r, y + r, y + r };
         drawing.fillPolygon(volcX, volcY, 3);
+        }
 
         // lava
         drawing.setColor(new Color(100, 10, 10));

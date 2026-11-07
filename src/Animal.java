@@ -3,6 +3,7 @@ import java.util.List;
 
 abstract class Animal { // parent class for all animals
     float health;
+    float maxHealth;
     float reproductionCooldown = 350;
     int damage;
     public int attackCooldown = 0;
@@ -12,6 +13,10 @@ abstract class Animal { // parent class for all animals
     boolean isHungry = false;
     int starvationTimer = 600;
     int defaultStarvationTime = 600;
+    boolean invulnerable = false;
+    private boolean statsCaptured;
+    int poisonTicks = 0;
+    float speedMultiplier = 1f;
 
     float speed;
     int x; // current x position
@@ -22,10 +27,21 @@ abstract class Animal { // parent class for all animals
     int width = 40;
     int height = 40;
 
-    public MovementStrategy getWanderStrategy() { return wanderStrategy; }
-    public MovementStrategy getHuntStrategy() { return huntStrategy; }
-    public void setWanderStrategy(MovementStrategy s) { this.wanderStrategy = s; }
-    public void setHuntStrategy(MovementStrategy s) { this.huntStrategy = s; }
+    public MovementStrategy getWanderStrategy() {
+        return wanderStrategy;
+    }
+
+    public MovementStrategy getHuntStrategy() {
+        return huntStrategy;
+    }
+
+    public void setWanderStrategy(MovementStrategy s) {
+        this.wanderStrategy = s;
+    }
+
+    public void setHuntStrategy(MovementStrategy s) {
+        this.huntStrategy = s;
+    }
 
     protected AnimalState currentState;
     protected MovementStrategy wanderStrategy = new RandomWanderStrategy();
@@ -35,16 +51,38 @@ abstract class Animal { // parent class for all animals
         this.currentState = new WanderingState();
     }
 
+    public void resetEffects() { // calls once per tick, before zones run
+        if (!statsCaptured) {
+            maxHealth = health;
+            statsCaptured = true; // full health at first tick = cap for healing
+        }
+        invulnerable = false; // zones re-apply it each tick while the animal is inside
+        speedMultiplier = 1f;
+
+        if (poisonTicks > 0) {
+            takeDamage(0.02f);
+            poisonTicks--;
+        }
+    }
+
+    public void heal(float amount) {
+        health = Math.min(maxHealth, health + amount);
+    }
+
     public void setState(AnimalState newState) {
         this.currentState = newState;
     }
 
     public void kill() {
+        if (invulnerable)
+            return;
         health = 0;
         this.currentState = new DeadState();
     }
 
     public void takeDamage(float damage) {
+        if (invulnerable)
+            return;
         health -= damage;
         if (health <= 0) {
             this.currentState = new DeadState();
@@ -57,6 +95,14 @@ abstract class Animal { // parent class for all animals
         } else {
             return false;
         }
+    }
+
+    public void setPoison(int ticks) {
+        poisonTicks = Math.max(poisonTicks, ticks); // re-entering ash refreshes the timer, it doesn't stack
+    }
+
+    public void cleanse() {
+        poisonTicks = 0;
     }
 
     public Rectangle getBounds() { // a collider
@@ -122,5 +168,31 @@ abstract class Animal { // parent class for all animals
             String starvText = "Dying in: " + secondsLeft + "s (" + starvationTimer + "t)";
             g2.drawString(starvText, x, y - 5);
         }
-    }
+        
+        if (invulnerable == true) {
+            g2.setColor(Color.YELLOW);
+            String shieldText = "Shielded";
+            g2.drawString(shieldText, x, y - 30);
+        }
+ 
+        if (poisonTicks > 0) {
+            g2.setColor(new Color(128, 0, 128));
+            String poisonText = "Poisoned" + poisonTicks;
+            g2.drawString(poisonText, x, y - 40);
+        }
+
+        if (speedMultiplier > 1) {
+            g2.setColor(Color.BLUE);
+            String speedBoostString = "Speed BOOST";
+            g2.drawString(speedBoostString, x, y - 35);
+        }
+
+        if (speedMultiplier < 1) {
+            g2.setColor(Color.GRAY);
+            String slowText = "Slowed";
+            g2.drawString (slowText, x , y - 35);
+        }
+
+
+    } 
 }
