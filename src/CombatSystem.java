@@ -1,120 +1,117 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CombatSystem {
 
-    public static void handleCollision(Animal a, Animal b, List<Animal> animals) { // check which animal collide with which
+    public static void handleCollision(Animal a, Animal b, List<Animal> animals) {
         if (a instanceof Dinosaur && b instanceof Caveman) {
-            Dinosaur dino = (Dinosaur) a;
-            Caveman caveman = (Caveman) b;
-            dinoCavemanCombat(dino, caveman, animals);
+            dinoCavemanCombat((Dinosaur) a, (Caveman) b, animals);
         } else if (a instanceof Caveman && b instanceof Dinosaur) {
-            Caveman caveman = (Caveman) a;
-            Dinosaur dino = (Dinosaur) b;
-            dinoCavemanCombat(dino, caveman, animals);
+            dinoCavemanCombat((Dinosaur) b, (Caveman) a, animals);
         } else if (a instanceof Dinosaur && b instanceof Dinosaur) {
-            Dinosaur d1 = (Dinosaur) a;
-            Dinosaur d2 = (Dinosaur) b;
-            dinoDinoCombat(d1, d2);
+            dinoDinoCombat((Dinosaur) a, (Dinosaur) b);
+        } else if (a instanceof Caveman && b instanceof Cow) {
+            cavemanCowCombat((Caveman) a, (Cow) b);
+        } else if (a instanceof Cow && b instanceof Caveman) {
+            cavemanCowCombat((Caveman) b, (Cow) a);
         }
     }
 
     private static void dinoCavemanCombat(Dinosaur dino, Caveman caveman, List<Animal> animals) {
-        if (dino.isHungry && dino.attackCooldown == 0 && caveman.attackCooldown == 0) {
-            List<Caveman> fighters = new ArrayList<>(); // list of cavemen join combat
-            fighters.add(caveman); // the attacked cavemen
+        if (dino.isHungry
+             && dino.attackCooldown == 0 && caveman.attackCooldown == 0) {
+            List<Caveman> fighters = new ArrayList<>();
+            fighters.add(caveman);
 
-            caveman.takeDamage(dino.damage); // dinosaur attack first
-            dino.attackCooldown = 30; // wait 0.5s
+            // dino attack first
+            caveman.takeDamage(dino.damage);
+            dino.attackCooldown = 30;
             caveman.attackCooldown = 30;
 
-            if (caveman.isDead() == false) { // if caveman alive => counter attack
+            // Caveman counter attack
+            if (!caveman.isDead()) {
                 dino.takeDamage(caveman.damage);
 
-                // find cavemen inside AlertRadius to join combat
-                for (int i = 0; i < animals.size(); i++) {
-                    Animal other = animals.get(i);
+                // Find ally Caveman in Alert Radius
+                List<Caveman> nearbyAllies = animals.parallelStream()
+                    .filter(other -> other instanceof Caveman && other != caveman && !other.isDead())
+                    .map(other -> (Caveman) other)
+                    .filter(ally -> caveman.getDistanceTo(ally) <= Caveman.ALERT_RADIUS)
+                    .collect(Collectors.toList());
 
-                    if (other instanceof Caveman && other != caveman) {
-                        Caveman ally = (Caveman) other;
-                        double distance = caveman.getDistanceTo(ally);
+                fighters.addAll(nearbyAllies);
 
-                        if (distance <= Caveman.ALERT_RADIUS) {
-                            dino.takeDamage(ally.damage);
-                            fighters.add(ally);
-
-                            // ally change direction and go to the dinosaur
-                            if (ally.x < dino.x) {
-                                ally.dx = Math.abs((int) ally.speed);
-                            } else {
-                                ally.dx = -Math.abs((int) ally.speed);
-                            }
-
-                            if (ally.y < dino.y) {
-                                ally.dy = Math.abs((int) ally.speed);
-                            } else {
-                                ally.dy = -Math.abs((int) ally.speed);
-                            }
-                        }
-                    }
+                for (Caveman ally : nearbyAllies) {
+                    dino.takeDamage(ally.damage);
+                    MovementStrategy.moveToward(ally, dino.x, dino.y);
                 }
             }
 
-            // if cavemen die => dinosaur eat caveman
-            if (caveman.isDead() == true) {
+            // If caveman die -> dino eat
+            if (caveman.isDead()) {
                 dino.hunger = Math.min(dino.maxHunger, dino.hunger + caveman.foodValue);
                 dino.isHungry = false;
                 dino.starvationTimer = dino.defaultStarvationTime;
+                caveman.setState(new DeadState());
             }
 
-            // if dinosaur die => caveman eat dinosaur
-            if (dino.isDead() == true) {
-                for (int i = 0; i < fighters.size(); i++) {
-                    Caveman fighter = fighters.get(i);
-
-                    // if caveman didn't die => receive dinosaur meat
-                    if (fighter.isDead() == false) {
+            // If dino die -> cavemen eat
+            if (dino.isDead()) {
+                for (Caveman fighter : fighters) {
+                    if (!fighter.isDead()) {
                         fighter.hunger = Math.min(fighter.maxHunger, fighter.hunger + dino.foodValue);
                         fighter.isHungry = false;
                         fighter.starvationTimer = fighter.defaultStarvationTime;
                     }
                 }
+                dino.setState(new DeadState());
+            }
+        }
+    }
+
+    private static void cavemanCowCombat(Caveman caveman, Cow cow) {
+        if (caveman.isHungry || caveman.attackCooldown == 0) {
+            // Caveman hits the cow (cows have 0 damage, no counter attack)
+            cow.takeDamage(caveman.damage);
+            caveman.attackCooldown = 30;
+
+            if (cow.isDead()) {
+                caveman.hunger = Math.min(caveman.maxHunger, caveman.hunger + cow.foodValue);
+                caveman.isHungry = false;
+                caveman.starvationTimer = caveman.defaultStarvationTime;
+                cow.setState(new DeadState());
             }
         }
     }
 
     private static void dinoDinoCombat(Dinosaur d1, Dinosaur d2) {
-        // if d1 is hungry and attack first
-        if (d1.isHungry == true && d1.attackCooldown == 0 && d2.attackCooldown == 0) {
+        if (d1.isHungry && d1.attackCooldown == 0 && d2.attackCooldown == 0) {
             executeDinoFight(d1, d2);
-        }
-        // if d2 is hungry and attack d1
-        else if (d2.isHungry == true && d1.attackCooldown == 0 && d2.attackCooldown == 0) {
+        } else if (d2.isHungry && d1.attackCooldown == 0 && d2.attackCooldown == 0) {
             executeDinoFight(d2, d1);
         }
     }
 
     private static void executeDinoFight(Dinosaur attacker, Dinosaur defender) {
-        defender.takeDamage(attacker.damage); // d1/d2 attack first
-
+        defender.takeDamage(attacker.damage);
         attacker.attackCooldown = 30;
         defender.attackCooldown = 30;
 
-        if (defender.isDead() == false) {
-            attacker.takeDamage(defender.damage); // if defender not dead => counter attack
+        if (!defender.isDead()) {
+            attacker.takeDamage(defender.damage);
         }
 
-        // End combat: defender die => attacker eat
-        if (defender.isDead() == true) {
+        if (defender.isDead()) {
             attacker.hunger = Math.min(attacker.maxHunger, attacker.hunger + defender.foodValue);
             attacker.isHungry = false;
             attacker.starvationTimer = attacker.defaultStarvationTime;
-        }
-        // attacker die => defender eat
-        else if (attacker.isDead() == true) {
+            defender.setState(new DeadState());
+        } else if (attacker.isDead()) {
             defender.hunger = Math.min(defender.maxHunger, defender.hunger + attacker.foodValue);
             defender.isHungry = false;
             defender.starvationTimer = defender.defaultStarvationTime;
+            attacker.setState(new DeadState());
         }
     }
 }

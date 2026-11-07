@@ -1,8 +1,10 @@
 import java.awt.*;
+import java.util.List;
 
 abstract class Animal { // parent class for all animals
     float health;
-    float reproductionCooldown;
+    float maxHealth;
+    float reproductionCooldown = 350;
     int damage;
     public int attackCooldown = 0;
     int hunger;
@@ -11,23 +13,80 @@ abstract class Animal { // parent class for all animals
     boolean isHungry = false;
     int starvationTimer = 600;
     int defaultStarvationTime = 600;
+    boolean invulnerable = false;
+    private boolean statsCaptured;
+    int poisonTicks = 0;
+    float speedMultiplier = 1f;
 
     float speed;
-    int direction = Math.clamp(0, -1, 1);
     int x; // current x position
-    int y; // current y positino
+    int y; // current y position
     int dx; // direction or speed for x
     int dy; // direction or speed for y
 
     int width = 40;
     int height = 40;
 
+    public MovementStrategy getWanderStrategy() {
+        return wanderStrategy;
+    }
+
+    public MovementStrategy getHuntStrategy() {
+        return huntStrategy;
+    }
+
+    public void setWanderStrategy(MovementStrategy s) {
+        this.wanderStrategy = s;
+    }
+
+    public void setHuntStrategy(MovementStrategy s) {
+        this.huntStrategy = s;
+    }
+
+    protected AnimalState currentState;
+    protected MovementStrategy wanderStrategy = new RandomWanderStrategy();
+    protected MovementStrategy huntStrategy = new RandomWanderStrategy();
+
+    public Animal() {
+        this.currentState = new WanderingState();
+    }
+
+    public void resetEffects() { // calls once per tick, before zones run
+        if (!statsCaptured) {
+            maxHealth = health;
+            statsCaptured = true; // full health at first tick = cap for healing
+        }
+        invulnerable = false; // zones re-apply it each tick while the animal is inside
+        speedMultiplier = 1f;
+
+        if (poisonTicks > 0) {
+            takeDamage(0.02f);
+            poisonTicks--;
+        }
+    }
+
+    public void heal(float amount) {
+        health = Math.min(maxHealth, health + amount);
+    }
+
+    public void setState(AnimalState newState) {
+        this.currentState = newState;
+    }
+
     public void kill() {
+        if (invulnerable)
+            return;
         health = 0;
+        this.currentState = new DeadState();
     }
 
     public void takeDamage(float damage) {
+        if (invulnerable)
+            return;
         health -= damage;
+        if (health <= 0) {
+            this.currentState = new DeadState();
+        }
     }
 
     public boolean isDead() {
@@ -36,6 +95,14 @@ abstract class Animal { // parent class for all animals
         } else {
             return false;
         }
+    }
+
+    public void setPoison(int ticks) {
+        poisonTicks = Math.max(poisonTicks, ticks); // re-entering ash refreshes the timer, it doesn't stack
+    }
+
+    public void cleanse() {
+        poisonTicks = 0;
     }
 
     public Rectangle getBounds() { // a collider
@@ -48,18 +115,9 @@ abstract class Animal { // parent class for all animals
         return Math.sqrt((deltaX * deltaX) + (deltaY * deltaY));
     }
 
-    public void update(int screenWidth, int screenHeight) {
-        x += dx;
-        y += dy;
-
-        if (x <= 0 || x >= screenWidth) {
-            dx = -dx;
-        }
-        if (y <= 0 || y >= screenHeight) {
-            dy = -dy;
-        }
-
-        // Hunger and dead logic
+    // updateCore to call State
+    public void updateTimers() {
+        // Hunger logic
         if (hunger > 0) {
             hunger = hunger - 1; // count down hunger
         } else {
@@ -67,7 +125,7 @@ abstract class Animal { // parent class for all animals
         }
 
         // if animal hungry, start starvation time
-        if (isHungry == true) {
+        if (isHungry) {
             starvationTimer = starvationTimer - 1;
         }
 
@@ -75,6 +133,15 @@ abstract class Animal { // parent class for all animals
             attackCooldown--;
         }
 
+        if (reproductionCooldown > 0) {
+            reproductionCooldown--;
+        }
+    }
+
+    public void update(int screenWidth, int screenHeight, List<Animal> animals, List<Grass> grassList) {
+        if (currentState != null) {
+            currentState.update(this, screenWidth, screenHeight, animals, grassList);
+        }
     }
 
     void draw(Graphics2D g2) {
@@ -101,5 +168,31 @@ abstract class Animal { // parent class for all animals
             String starvText = "Dying in: " + secondsLeft + "s (" + starvationTimer + "t)";
             g2.drawString(starvText, x, y - 5);
         }
-    }
+        
+        if (invulnerable == true) {
+            g2.setColor(Color.YELLOW);
+            String shieldText = "Shielded";
+            g2.drawString(shieldText, x, y - 30);
+        }
+ 
+        if (poisonTicks > 0) {
+            g2.setColor(new Color(128, 0, 128));
+            String poisonText = "Poisoned" + poisonTicks;
+            g2.drawString(poisonText, x, y - 40);
+        }
+
+        if (speedMultiplier > 1) {
+            g2.setColor(Color.BLUE);
+            String speedBoostString = "Speed BOOST";
+            g2.drawString(speedBoostString, x, y - 35);
+        }
+
+        if (speedMultiplier < 1) {
+            g2.setColor(Color.GRAY);
+            String slowText = "Slowed";
+            g2.drawString (slowText, x , y - 35);
+        }
+
+
+    } 
 }
