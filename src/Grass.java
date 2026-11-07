@@ -6,7 +6,7 @@ public class Grass {
     private static final BufferedImage sprite =
             SpriteLoader.load("src/assets/plant.png");
     public int x, y;
-    public int size = 12;
+    public int size = 30;
     public int foodValue = 500;
     public boolean isEaten = false;
     public Grass(int x, int y) {
