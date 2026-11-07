@@ -22,7 +22,7 @@ public class Simulator extends JPanel {
     private int grassSpawnTimer = 0;
 
     // Written only in the constructor, so safe to read from the EDT.
-    private final List<Plant> plants = new ArrayList<>();
+   
 
     private final Random rand = new Random();
     private final int targetPlantCount = 12;
@@ -84,7 +84,7 @@ public class Simulator extends JPanel {
         });
 
         for (int i = 0; i < targetPlantCount; i++) {
-            createPlant();
+            createGrass();
         }
 
         addComponentListener(new ComponentAdapter() {
@@ -146,7 +146,7 @@ public class Simulator extends JPanel {
         boolean suppressGrass = environment.stream().anyMatch(Zone::suppressesGrass);
         if (!suppressGrass) {
             grassSpawnTimer++;
-            if (grassSpawnTimer >= 30) {
+            if (grassSpawnTimer >= 180) {
                 int randomX = 30 + rand.nextInt(Math.max(100, screenWidth - 60));
                 int randomY = 30 + rand.nextInt(Math.max(100, screenHeight - 60));
                 grassList.add(new Grass(randomX, randomY));
@@ -209,9 +209,6 @@ public class Simulator extends JPanel {
             zone.draw(g2);
         }
 
-        for (Plant plant : plants) {
-            plant.draw(g2);
-        }
 
         for (Grass grass : grassView) {
             grass.draw(g2);
@@ -245,14 +242,14 @@ public class Simulator extends JPanel {
         commands.add(() -> animals.add(new Cow(spawnX, spawnY)));
     }
 
-    private void createPlant() {
+    private void createGrass() {
         int panelWidth = getWidth() > 100 ? getWidth() : 1000;
         int panelHeight = getHeight() > 100 ? getHeight() : 700;
 
         int x = 30 + rand.nextInt(Math.max(1, panelWidth - 90));
         int y = 60 + rand.nextInt(Math.max(1, panelHeight - 140));
 
-        plants.add(new Plant(x, y));
+       grassList.add(new Grass(x, y));
     }
 
     // Stop the sim thread when the panel is removed from the window
