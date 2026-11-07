@@ -29,7 +29,7 @@ public interface MovementStrategy {
         }
     }
 
-    // Point dx / dy at a target (was Animal.moveToward)
+    // Point dx / dy at a target
     static void moveToward(Animal animal, int targetX, int targetY) {
         int speed = (int) animal.speed;
 
