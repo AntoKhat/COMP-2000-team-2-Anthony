@@ -52,7 +52,7 @@ public class Cow extends Animal implements AnimalBehaviours {
     @Override
     public void draw(Graphics2D g2) {
         if (sprite != null) {
-            g2.drawImage(sprite, x, y, 50, 50, null);
+            g2.drawImage(sprite, x, y, 75, 75, null);
         } else {
             g2.setColor(new Color(180, 130, 90));
             g2.fillRoundRect(x, y, 35, 30, 8, 8);

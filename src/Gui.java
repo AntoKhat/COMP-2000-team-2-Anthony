@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
 /// Draws the window and gui using JFrame and java swing libraries
@@ -60,9 +58,9 @@ public class Gui extends JFrame implements AppConstants {
         startGame.setForeground(Color.BLACK);
         startGame.setFocusPainted(false);
 
-        startGame.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        startGame.addActionListener(e -> {
+           
+       
                   JFrame frame = new JFrame("Predator Prey Assignment");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -71,7 +69,7 @@ public class Gui extends JFrame implements AppConstants {
                 frame.setVisible(true);
 
                 dispose();
-            }
+            
             
         });
         return startGame;
@@ -85,12 +83,12 @@ public class Gui extends JFrame implements AppConstants {
         quitGame.setForeground(Color.BLACK);
         quitGame.setFocusPainted(false);
 
-        quitGame.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        quitGame.addActionListener(e -> {
+            
+            
                 System.out.println("Button clicked - game quiting");
                 System.exit(0); // Safely Closes the app.
-            }
+            
         });
         return quitGame;
     }
