@@ -11,16 +11,20 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Simulator extends JPanel {
     // Owned by the sim thread only. Never touch these from the EDT after startup.
     private final List<Animal> animals = new ArrayList<>();
     private final List<Zone> environment = new ArrayList<>();
+    private final List<Grass> grassList = new ArrayList<>();
+    private int grassSpawnTimer = 0;
 
     // Written only in the constructor, so safe to read from the EDT.
     private final List<Plant> plants = new ArrayList<>();
 
-    private final Random random = new Random();
+    private final Random rand = new Random();
     private final int targetPlantCount = 12;
 
     private final BufferedImage background =
@@ -43,25 +47,41 @@ public class Simulator extends JPanel {
     // Sim thread -> EDT: copies the painter reads. Replaced every tick.
     private volatile List<Animal> animalsView = List.of();
     private volatile List<Zone> environmentView = List.of();
+    private volatile List<Grass> grassView = List.of();
 
     // Panel size, cached so the sim thread never calls Swing getters
     private volatile int simWidth;
     private volatile int simHeight;
 
     public Simulator() {
-        // add some initial dinosaurs and cavemen
         // (these are queued and run on the first tick, in this order)
-        createDinosaur(100, 200);
-        createDinosaur(100, 50);
+        createDinosaur(150, 200);
+        createDinosaur(150, 500);
+        createDinosaur(400, 400);
+        createDinosaur(400, 50);
         createCaveman(210, 200);
         createCaveman(220, 200);
         createCaveman(500, 500);
         createCaveman(500, 400);
-        createVolcano(400, 300, 150, 0);
-        createCave(1500, 1000);
         createCow(200, 300);
         createCow(100, 250);
         createCow(250, 100);
+        createCow(400, 400);
+        createCow(450, 400);
+        createCow(300, 300);
+
+        // Creates environment with their related status effect
+        // (queued too, because environment belongs to the sim thread)
+        commands.add(() -> {
+            environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), a -> a instanceof Caveman), a -> a instanceof Caveman));
+            environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(2000, 500), a -> a instanceof Caveman), a -> a instanceof Caveman));
+            Volcano volcano = new Volcano(400, 300, 150, 0);
+            environment.add(ZoneEffects.poison(new AshCloud(volcano), a -> true, 300));
+            environment.add(volcano);
+            environment.add(ZoneEffects.cleanse(new WaterHole(120, 1000, 90), a -> true));
+            environment.add(ZoneEffects.slow(new Swamp(1300, 20, 400, 380), a -> true));
+            environment.add(ZoneEffects.speedBoost(new Plain(1000, 800, 800, 900), a -> a instanceof Dinosaur, 1.5f));
+        });
 
         for (int i = 0; i < targetPlantCount; i++) {
             createPlant();
@@ -92,6 +112,7 @@ public class Simulator extends JPanel {
             // Publish fresh copies for the painter
             animalsView = new ArrayList<>(animals);
             environmentView = new ArrayList<>(environment);
+            grassView = new ArrayList<>(grassList);
 
             repaint(); // safe to call from any thread
         } catch (Throwable t) {
@@ -103,39 +124,59 @@ public class Simulator extends JPanel {
     private void updateSimulation() {
         int screenWidth = simWidth;
         int screenHeight = simHeight;
+        if (screenWidth <= 0 || screenHeight <= 0) return; // panel not on screen yet
 
-        if (environment.isEmpty()) return;
-        Volcano volcano = (Volcano) environment.get(0);
+        animals.forEach(Animal::resetEffects);
 
-        for (int j = 0; j < environment.size(); j++) { // updates the environment
-            environment.get(j).update();
-        }
-
-        for (int i = 0; i < animals.size(); i++) { // kills animals inside the volcano's lava range
-            if (volcano.contains(animals.get(i).x, animals.get(i).y)) {
-                animals.get(i).kill();
+        for (Zone zone : environment) {
+            zone.update();
+            for (Animal a : animals) {
+                if (zone.contains(a.x, a.y)) {
+                    zone.applyEffect(a);
+                }
             }
-        }
-
-        
-
-        for (int i = 0; i < animals.size(); i++) {
-            for (int j = i + 1; j < animals.size(); j++) {
-                Animal a = animals.get(i);
-                Animal b = animals.get(j);
-
-                // check if animals collide with each other
-                if (a.getBounds().intersects(b.getBounds())) {
-                    CombatSystem.handleCollision(a, b, animals);
+            for (Grass g : grassList) {
+                if (zone.contains(g.x, g.y)) {
+                    zone.onGrass(g);
                 }
             }
         }
 
-        for (int i = animals.size() - 1; i >= 0; i--) {
-            if (animals.get(i).isDead()) {
-                animals.remove(i); // remove dead animal
+        // Spawning grass gets supressed when volcano errupts
+        boolean suppressGrass = environment.stream().anyMatch(Zone::suppressesGrass);
+        if (!suppressGrass) {
+            grassSpawnTimer++;
+            if (grassSpawnTimer >= 30) {
+                int randomX = 30 + rand.nextInt(Math.max(100, screenWidth - 60));
+                int randomY = 30 + rand.nextInt(Math.max(100, screenHeight - 60));
+                grassList.add(new Grass(randomX, randomY));
+                grassSpawnTimer = 0;
             }
         }
+
+        // Update animals state
+        List<Animal> animalsCopy = new ArrayList<>(animals); // Make a copy of animal list
+        for (Animal a : animalsCopy) {
+            a.update(screenWidth, screenHeight, animals, grassList);
+        }
+
+        // (read only) find every pair of animals collided - parallel stream
+        List<Animal[]> collisions = IntStream.range(0, animals.size())
+            .parallel()
+            .boxed()
+            .flatMap(i -> IntStream.range(i + 1, animals.size())
+                .filter(j -> animals.get(i).getBounds().intersects(animals.get(j).getBounds()))
+                .mapToObj(j -> new Animal[] { animals.get(i), animals.get(j) }))
+            .collect(Collectors.toList());
+
+        // resolve the fights one at a time -> avoids race conditions
+        for (Animal[] pair : collisions) {
+            CombatSystem.handleCollision(pair[0], pair[1], animals);
+        }
+
+        // Remove dead animals
+        animals.removeIf(Animal::isDead);
+        grassList.removeIf(g -> g.isEaten);
     }
 
     // EDT only paints. It reads the published views, never the live lists.
@@ -164,17 +205,23 @@ public class Simulator extends JPanel {
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        for (Zone z : environmentView) {
-            z.draw(g2);
+        for (Zone zone : environmentView) {
+            zone.draw(g2);
         }
 
-        for (Plant p : plants) {
-            p.draw(g2);
+        for (Plant plant : plants) {
+            plant.draw(g2);
         }
 
-        for (Animal a : animalsView) {
-            a.draw(g2);
+        for (Grass grass : grassView) {
+            grass.draw(g2);
         }
+
+        List<Animal> animalsNow = animalsView;
+        for (Animal animal : animalsNow) {
+            animal.draw(g2);
+        }
+        EcosystemDashboard.draw(g2, animalsNow);
     }
 
     // All create methods go through the queue so the EDT never mutates sim state
@@ -202,8 +249,8 @@ public class Simulator extends JPanel {
         int panelWidth = getWidth() > 100 ? getWidth() : 1000;
         int panelHeight = getHeight() > 100 ? getHeight() : 700;
 
-        int x = 30 + random.nextInt(Math.max(1, panelWidth - 90));
-        int y = 60 + random.nextInt(Math.max(1, panelHeight - 140));
+        int x = 30 + rand.nextInt(Math.max(1, panelWidth - 90));
+        int y = 60 + rand.nextInt(Math.max(1, panelHeight - 140));
 
         plants.add(new Plant(x, y));
     }
