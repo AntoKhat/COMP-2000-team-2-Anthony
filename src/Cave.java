@@ -8,7 +8,7 @@ public class Cave extends Zone {
     Cave(int spawnX, int spawnY) {
         x = spawnX;
         y = spawnY;
-    }
+    }       
 
     @Override
     public void draw(Graphics2D drawing) { //draws the shapes of the cave. (need to add more detail)

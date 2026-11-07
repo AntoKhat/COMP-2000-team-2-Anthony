@@ -137,6 +137,7 @@ public class Simulator extends JPanel {
         for (Animal animal : animals) {
             animal.draw(g2);
         }
+        EcosystemDashboard.draw(g2, animals);
     }
 
     private Volcano getVolcano() {
