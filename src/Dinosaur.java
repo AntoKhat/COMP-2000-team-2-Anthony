@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Dinosaur extends Animal implements AnimalBehaviours {
 
@@ -9,6 +10,8 @@ public class Dinosaur extends Animal implements AnimalBehaviours {
     private static int defaultMaxHunger = 800;
     private static int defaultFoodValue = 400;
 
+private static final BufferedImage sprite =
+        SpriteLoader.load("src/assets/dinosaur.png");
 
         Dinosaur () {
             setStats();
@@ -49,38 +52,12 @@ public class Dinosaur extends Animal implements AnimalBehaviours {
 
     @Override
     public void draw(Graphics2D g2) {
-        g2.setColor(new Color(60, 150, 60));
-
-        // Body (oval)
-        g2.fillOval(x, y - 20, 50, 30);
-
-        // Tail (triangle-ish using polygon)
-        int[] tailX = {x, x - 20, x};
-        int[] tailY = {y - 15, y - 5, y};
-        g2.fillPolygon(tailX, tailY, 3);
-
-        // Neck + head
-        g2.fillOval(x + 40, y - 40, 15, 25);   // neck
-        g2.fillOval(x + 47, y - 50, 18, 15);  // head
-
-        // Legs
-        g2.fillRect(x + 7, y + 5, 6, 15);
-        g2.fillRect(x + 32, y + 5, 6, 15);
-
-        // Spikes on back
-        g2.setColor(new Color(30, 100, 30));
-        for (int i = 0; i < 4; i++) {
-            int sx = x + 10 + i * 9;
-            int[] spikeX = {sx, sx + 4, sx + 8};
-            int[] spikeY = {y - 20, y - 28, y - 20};
-            g2.fillPolygon(spikeX, spikeY, 3);
+        if (sprite != null) {
+            g2.drawImage(sprite, x, y, 120, 120, null);
+        } else {
+            g2.setColor(new Color(60, 150, 60));
+            g2.fillOval(x, y, 50, 30);
         }
-
-        // Eye
-        g2.setColor(Color.BLACK);
-        g2.fillOval(x + 56, y - 48, 2, 2);
-
-        // Stat
         drawStats(g2);
     }
 }

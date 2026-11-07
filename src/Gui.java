@@ -2,9 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 
 /// Draws the window and gui using JFrame and java swing libraries
 public class Gui extends JFrame implements AppConstants {
+     
+    private final BufferedImage menuBackground =
+       SpriteLoader.load("src/assets/start_screen.png");
     public Gui() {
         super("Predator-Prey: Team 2");
         setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -12,6 +16,26 @@ public class Gui extends JFrame implements AppConstants {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         setLayout(null);
+
+       JPanel backgroundPanel = new JPanel(null) {
+            @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+        if (menuBackground != null) {
+            g.drawImage(
+            menuBackground,
+            0,
+            0,
+            getWidth(),
+            getHeight(),
+            null);
+                }
+            }
+        };
+        
+        backgroundPanel.setBounds(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        setContentPane(backgroundPanel);
 
         // Title text
         JLabel title = new JLabel("Predator-Prey: Team 2 Final Project");
@@ -39,9 +63,16 @@ public class Gui extends JFrame implements AppConstants {
         startGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Continue through to the game.
-                System.out.println("Button clicked - game starting");
+                  JFrame frame = new JFrame("Predator Prey Assignment");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+                frame.setLocationRelativeTo(null);
+                frame.add(new Simulator());
+                frame.setVisible(true);
+
+                dispose();
             }
+            
         });
         return startGame;
     }

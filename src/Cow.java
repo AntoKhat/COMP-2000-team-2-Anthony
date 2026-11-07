@@ -12,12 +12,14 @@ public class Cow extends Animal implements AnimalBehaviours {
 
     private static final BufferedImage sprite = SpriteLoader.load("src/assets/cow.png");
     private static Random rand = new Random();
+    
+    private int wanderTimer = 0;
 
-    Cow() {
-        setStats();
-        setStrategies();
-        x = rand.nextInt(700);
-        y = rand.nextInt(500);
+    Cow() { // default spawn
+    setStats();
+    setStrategies();
+    x = rand.nextInt(700);
+    y = rand.nextInt(500);
     }
 
     Cow(int x, int y) {
@@ -45,6 +47,7 @@ public class Cow extends Animal implements AnimalBehaviours {
         setWanderStrategy(new RandomWanderStrategy());
         setHuntStrategy(new GrazeStrategy());
     }
+    
 
     @Override
     public void draw(Graphics2D g2) {
