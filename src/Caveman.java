@@ -1,5 +1,5 @@
 import java.awt.*;
-
+import java.awt.image.BufferedImage;
 
 public class Caveman extends Animal implements AnimalBehaviours{
     // stats can change later for balancing
@@ -10,6 +10,9 @@ public class Caveman extends Animal implements AnimalBehaviours{
     private static int defaultMaxHunger = 800;
     private static int defaultFoodValue = 150;
     public static final int ALERT_RADIUS = 150;
+
+    private static final BufferedImage sprite =
+        SpriteLoader.load("src/assets/caveman.png");
 
     Caveman(){
         setStats();
@@ -49,25 +52,15 @@ public class Caveman extends Animal implements AnimalBehaviours{
     }
 
     @Override
-        public void draw(Graphics2D g2) {
+    public void draw(Graphics2D g2) {
+         if (sprite != null) {
+        g2.drawImage(sprite, x, y, 100, 100, null);
+             } else {
         g2.setColor(Color.BLACK);
- 
-        // Head
-        g2.drawOval(x, y, 6, 6);
-
-        // Body
-        g2.drawLine(x + 3, y + 6, x + 3, y + 14);
-
-        // Arms
-        g2.drawLine(x + 3, y + 8, x - 2, y + 12);
-        g2.drawLine(x + 3, y + 8, x + 8, y + 12);
-
-        // Legs
-        g2.drawLine(x + 3, y + 14, x - 1, y + 20);
-        g2.drawLine(x + 3, y + 14, x + 7, y + 20);
-        
-        // Stat
-        drawStats(g2);
+        g2.fillOval(x, y, 20, 20);
     }
+
+    drawStats(g2);
+}
 
 }

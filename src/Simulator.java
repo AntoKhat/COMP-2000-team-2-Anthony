@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -11,9 +12,14 @@ public class Simulator extends JPanel {
     private List<Animal> animals = new ArrayList<>();
     private List<Zone> environment = new ArrayList<>();
     private List<Grass> grassList = new ArrayList<>();
+    private List<Plant> plants = new ArrayList<>();
     private final Timer timer;
     private int grassSpawnTimer = 0;
-    private Random rand = new Random();
+    private final Random rand = new Random();
+    private final int targetPlantCount = 12;
+
+    private final BufferedImage background =
+        SpriteLoader.load("src/assets/background.png");
 
     public Simulator() {
         createDinosaur(150, 200);
@@ -42,6 +48,10 @@ public class Simulator extends JPanel {
         environment.add(ZoneEffects.cleanse(new WaterHole(120, 1000, 90), a -> true));
         environment.add(ZoneEffects.slow(new Swamp(1300, 20, 400, 380), a -> true));
         environment.add(ZoneEffects.speedBoost(new Plain(1000, 800, 800, 900), a -> a instanceof Dinosaur, 1.5f));
+
+        for (int i = 0; i < targetPlantCount; i++) {
+            createPlant();
+        }
 
         timer = new Timer(16, e -> {
             updateSimulation();
@@ -88,30 +98,16 @@ public class Simulator extends JPanel {
             a.update(screenWidth, screenHeight, animals, grassList);
         }
 
-        // Check animal collision (Combat System)
-        /*
-         * for (int i = 0; i < animals.size(); i++) {
-         * for (int j = i + 1; j < animals.size(); j++) {
-         * Animal a = animals.get(i);
-         * Animal b = animals.get(j);
-         * 
-         * if (a.getBounds().intersects(b.getBounds())) {
-         * CombatSystem.handleCollision(a, b, animals);
-         * }
-         * }
-         * }
-         */
-
-        // (read only) find every pair of animals collided
+        // (read only) find every pair of animals collided - parallel stream
         List<Animal[]> collisions = IntStream.range(0, animals.size())
-                .parallel()
-                .boxed()
-                .flatMap(i -> IntStream.range(i + 1, animals.size())
-                        .filter(j -> animals.get(i).getBounds().intersects(animals.get(j).getBounds()))
-                        .mapToObj(j -> new Animal[] { animals.get(i), animals.get(j) }))
-                .collect(Collectors.toList());
+            .parallel()
+            .boxed()
+            .flatMap(i -> IntStream.range(i + 1, animals.size())
+                .filter(j -> animals.get(i).getBounds().intersects(animals.get(j).getBounds()))
+                .mapToObj(j -> new Animal[] { animals.get(i), animals.get(j) }))
+            .collect(Collectors.toList());
 
-        // resolve the fights one thread at a time -> fix race conditions
+        // resolve the fights one at a time -> avoids race conditions
         for (Animal[] pair : collisions) {
             CombatSystem.handleCollision(pair[0], pair[1], animals);
         }
@@ -125,10 +121,18 @@ public class Simulator extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+
+        if (background != null) {
+            g2.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+        }
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         for (Zone zone : environment) {
             zone.draw(g2);
+        }
+
+        for (Plant plant : plants) {
+            plant.draw(g2);
         }
 
         for (Grass grass : grassList) {
@@ -158,5 +162,15 @@ public class Simulator extends JPanel {
 
     public void createCow(int spawnX, int spawnY) {
         animals.add(new Cow(spawnX, spawnY));
+    }
+
+    private void createPlant() {
+        int panelWidth = getWidth() > 100 ? getWidth() : 1000;
+        int panelHeight = getHeight() > 100 ? getHeight() : 700;
+
+        int x = 30 + rand.nextInt(Math.max(1, panelWidth - 90));
+        int y = 60 + rand.nextInt(Math.max(1, panelHeight - 140));
+
+        plants.add(new Plant(x, y));
     }
 }
