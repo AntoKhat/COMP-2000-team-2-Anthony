@@ -73,14 +73,14 @@ public class Simulator extends JPanel {
         // Creates environment with their related status effect
         // (queued too, because environment belongs to the sim thread)
         commands.add(() -> {
-            environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(800, 700), a -> a instanceof Caveman), a -> a instanceof Caveman));
-            environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(2000, 500), a -> a instanceof Caveman), a -> a instanceof Caveman));
-            Volcano volcano = new Volcano(400, 300, 150, 0);
+            environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(600, 525), a -> a instanceof Caveman), a -> a instanceof Caveman));
+            environment.add(ZoneEffects.heal(ZoneEffects.shelter(new Cave(1500, 375), a -> a instanceof Caveman), a -> a instanceof Caveman));
+            Volcano volcano = new Volcano(300, 225, 113, 0);
             environment.add(ZoneEffects.poison(new AshCloud(volcano), a -> true, 300));
             environment.add(volcano);
-            environment.add(ZoneEffects.cleanse(new WaterHole(120, 1000, 90), a -> true));
-            environment.add(ZoneEffects.slow(new Swamp(1300, 20, 400, 380), a -> true));
-            environment.add(ZoneEffects.speedBoost(new Plain(1000, 800, 800, 900), a -> a instanceof Dinosaur, 1.5f));
+            environment.add(ZoneEffects.cleanse(new WaterHole(90, 750, 68), a -> true));
+            environment.add(ZoneEffects.slow(new Swamp(975, 15, 300, 285), a -> true));
+            environment.add(ZoneEffects.speedBoost(new Plain(750, 600, 600, 675), a -> a instanceof Dinosaur, 1.5f));
         });
 
         for (int i = 0; i < targetPlantCount; i++) {
