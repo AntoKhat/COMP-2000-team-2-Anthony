@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 
 public class Grass {
     private static final BufferedImage sprite =
-            SpriteLoader.load("src/assets/plant.png");
+            SpriteLoader.load("assets/plant.png");
     public int x, y;
     public int size = 30;
     public int foodValue = 500;

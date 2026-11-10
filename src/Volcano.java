@@ -6,7 +6,7 @@ public class Volcano extends Zone {
         // set the x value for where i want the zone to begin
     int r;
     int lavaRadius;
-    private static final BufferedImage sprite = SpriteLoader.load("src/assets/volcano.png");
+    private static final BufferedImage sprite = SpriteLoader.load("assets/volcano.png");
 
 
 

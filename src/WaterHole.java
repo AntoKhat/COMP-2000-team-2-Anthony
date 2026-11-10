@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 
 public class WaterHole extends Zone {
     private final int radius;
-    private static final BufferedImage sprite = SpriteLoader.load("src/assets/waterhole.png");
+    private static final BufferedImage sprite = SpriteLoader.load("assets/waterhole.png");
 
     WaterHole(int centreX, int centreY, int radius) {
         this.x = centreX;

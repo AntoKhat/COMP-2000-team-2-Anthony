@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 public class Plain extends Zone {
     private final int width;
     private final int height;
-    private static final BufferedImage sprite = SpriteLoader.load("src/assets/plain.png");
+    private static final BufferedImage sprite = SpriteLoader.load("assets/plain.png");
 
     Plain(int spawnX, int spawnY, int width, int height) {
         x = spawnX;

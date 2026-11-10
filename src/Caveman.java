@@ -12,7 +12,7 @@ public class Caveman extends Animal implements AnimalBehaviours{
     public static final int ALERT_RADIUS = 150;
 
     private static final BufferedImage sprite =
-        SpriteLoader.load("src/assets/caveman.png");
+        SpriteLoader.load("assets/caveman.png");
 
     Caveman(){
         setStats();

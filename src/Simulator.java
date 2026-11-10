@@ -28,7 +28,7 @@ public class Simulator extends JPanel {
     private final int targetPlantCount = 12;
 
     private final BufferedImage background =
-        SpriteLoader.load("src/assets/background.png");
+        SpriteLoader.load("assets/background.png");
 
     // Background scaled to the panel size. EDT only (built in paintComponent).
     private BufferedImage scaledBg;

@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 public class Gui extends JFrame implements AppConstants {
      
     private final BufferedImage menuBackground =
-       SpriteLoader.load("src/assets/start_screen.png");
+       SpriteLoader.load("assets/start_screen.png");
     public Gui() {
         super("Predator-Prey: Team 2");
         setSize(SCREEN_WIDTH, SCREEN_HEIGHT);

@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 public class Swamp extends Zone {
     private final int width;
     private final int height;
-    private static final BufferedImage sprite = SpriteLoader.load("src/assets/swamp.png");
+    private static final BufferedImage sprite = SpriteLoader.load("assets/swamp.png");
 
     Swamp(int spawnX, int spawnY, int width, int height) {
         x = spawnX;

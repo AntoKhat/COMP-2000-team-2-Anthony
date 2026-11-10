@@ -5,7 +5,7 @@ public class Cave extends Zone {
 
     int length = 150;
     int width = 150;
-    private static final BufferedImage sprite = SpriteLoader.load("src/assets/cave.png");
+    private static final BufferedImage sprite = SpriteLoader.load("assets/cave.png");
 
     Cave(int spawnX, int spawnY) {
         x = spawnX;

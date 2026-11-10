@@ -10,7 +10,7 @@ public class Cow extends Animal implements AnimalBehaviours {
     private static int defaultFoodValue = 200;
     private static int defaultDamage = 0;
 
-    private static final BufferedImage sprite = SpriteLoader.load("src/assets/cow.png");
+    private static final BufferedImage sprite = SpriteLoader.load("assets/cow.png");
     private static Random rand = new Random();
     
     private int wanderTimer = 0;

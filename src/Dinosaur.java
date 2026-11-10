@@ -11,7 +11,7 @@ public class Dinosaur extends Animal implements AnimalBehaviours {
     private static int defaultFoodValue = 400;
 
 private static final BufferedImage sprite =
-        SpriteLoader.load("src/assets/dinosaur.png");
+        SpriteLoader.load("assets/dinosaur.png");
 
         Dinosaur () {
             setStats();
