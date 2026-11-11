@@ -5,6 +5,9 @@ import javax.imageio.ImageIO;
 
 public class SpriteLoader {
     public static BufferedImage load(String path) {
+        if (!path.startsWith("src/")) {
+            path = "src/" + path;
+        }
         try {
             return ImageIO.read(new File(path));
         } catch (IOException e) {
